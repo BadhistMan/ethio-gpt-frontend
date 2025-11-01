@@ -95,8 +95,13 @@ class ApiClient {
     return this.post('/write', { type, topic, length, tone })
   }
 
-  async generateResumePDF(resumeData) {
+  async generateResume(resumeData) {
     return this.post('/generate_resume', resumeData)
+  }
+
+  // Helper to get file URLs
+  getFileUrl(filename) {
+    return `${this.baseUrl.replace('/api', '')}/files/${filename}`
   }
 }
 
