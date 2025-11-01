@@ -27,7 +27,9 @@ const ImageGen = () => {
 
     try {
       const response = await api.generateImage(prompt, preset)
-      setGeneratedImage(response.url)
+      // Use the API helper to get the correct file URL
+      const imageUrl = api.getFileUrl(response.filename)
+      setGeneratedImage(imageUrl)
     } catch (err) {
       setError('Failed to generate image. Please try again.')
       console.error('Image generation error:', err)
@@ -45,6 +47,12 @@ const ImageGen = () => {
       link.click()
       document.body.removeChild(link)
     }
+  }
+
+  const clearAll = () => {
+    setPrompt('')
+    setGeneratedImage(null)
+    setError('')
   }
 
   return (
@@ -96,18 +104,27 @@ const ImageGen = () => {
             </div>
           </div>
 
-          <button
-            onClick={generateImage}
-            disabled={loading || !prompt.trim()}
-            className="w-full bg-ethio-green text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
-          >
-            {loading ? (
-              <RefreshCw className="w-5 h-5 animate-spin" />
-            ) : (
-              <Image className="w-5 h-5" />
-            )}
-            <span>{loading ? 'Generating...' : 'Generate Image'}</span>
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={generateImage}
+              disabled={loading || !prompt.trim()}
+              className="flex-1 bg-ethio-green text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+            >
+              {loading ? (
+                <RefreshCw className="w-5 h-5 animate-spin" />
+              ) : (
+                <Image className="w-5 h-5" />
+              )}
+              <span>{loading ? 'Generating...' : 'Generate Image'}</span>
+            </button>
+            
+            <button
+              onClick={clearAll}
+              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+            >
+              Clear
+            </button>
+          </div>
 
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
@@ -118,15 +135,27 @@ const ImageGen = () => {
 
         {/* Output Section */}
         <div className="space-y-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Generated Image
-          </label>
+          <div className="flex justify-between items-center">
+            <label className="block text-sm font-medium text-gray-700">
+              Generated Image
+            </label>
+            {generatedImage && (
+              <button
+                onClick={downloadImage}
+                className="flex items-center space-x-2 px-4 py-2 bg-ethio-green text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download</span>
+              </button>
+            )}
+          </div>
           
           <div className="border-2 border-dashed border-gray-300 rounded-lg h-96 bg-gray-50 flex items-center justify-center">
             {loading ? (
               <div className="text-center">
                 <RefreshCw className="w-12 h-12 text-gray-400 animate-spin mx-auto mb-4" />
                 <p className="text-gray-500">Generating your image...</p>
+                <p className="text-sm text-gray-400 mt-2">This may take 10-30 seconds</p>
               </div>
             ) : generatedImage ? (
               <div className="relative w-full h-full">
@@ -134,13 +163,11 @@ const ImageGen = () => {
                   src={generatedImage}
                   alt="Generated"
                   className="w-full h-full object-contain rounded-lg"
+                  onError={(e) => {
+                    console.error('Image failed to load:', generatedImage)
+                    setError('Failed to load generated image. Please try again.')
+                  }}
                 />
-                <button
-                  onClick={downloadImage}
-                  className="absolute bottom-4 right-4 bg-ethio-green text-white p-3 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Download className="w-5 h-5" />
-                </button>
               </div>
             ) : (
               <div className="text-center text-gray-500">
@@ -150,10 +177,11 @@ const ImageGen = () => {
             )}
           </div>
 
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-500 space-y-1">
             <p>• Rate limited to 10 images per hour</p>
             <p>• Image generation may take 10-30 seconds</p>
             <p>• Images are automatically deleted after 1 hour</p>
+            <p>• For best results, be descriptive with your prompts</p>
           </div>
         </div>
       </div>
